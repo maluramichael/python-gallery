@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Browser</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <div class="breadcrumb">
+            <a href="{{ url_for('gallery', **filter_args) }}">Home</a>
+            {% if current_path %}
+                {% set paths = current_path.split('/') %}
+                {% set accumulated = [] %}
+                {% for part in paths %}
+                    {% if part %}
+                        {% set _ = accumulated.append(part) %}
+                        / <a href="{{ url_for('gallery', subpath='/'.join(accumulated), **filter_args) }}">{{ part }}</a>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="sort-controls">
+            <select id="sortSelect" onchange="updateSort()">
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name</option>
+                <option value="size" {% if sort_by == 'size' %}selected{% endif %}>Size</option>
+                <option value="created" {% if sort_by == 'created' %}selected{% endif %}>Date Created</option>
+                <option value="modified" {% if sort_by == 'modified' %}selected{% endif %}>Date Modified</option>
+                <option value="type" {% if sort_by == 'type' %}selected{% endif %}>Videos First</option>
+                <option value="random" {% if sort_by == 'random' %}selected{% endif %}>Random</option>
+            </select>
+            <button onclick="toggleOrder()" data-order="{{ sort_order }}">
+                <span>{{ sort_order|title }}</span>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 14l5-5 5 5z"/>
+                </svg>
+            </button>
+            <div class="vertical-separator"></div>
+            <input type="text" id="filterInput" placeholder="Filter">
+            <div class="vertical-separator"></div>
+            <div class="size-selector">
+                <label for="sizeSelect">Size:</label>
+                <select id="sizeSelect" onchange="updateSize()">
+                    <option value="small" {% if size == 'small' %}selected{% endif %}>Small</option>
+                    <option value="medium" {% if size == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="big" {% if size == 'big' %}selected{% endif %}>Big</option>
+                </select>
+            </div>
+            <div class="vertical-separator"></div>
+            <div class="pagination">
+                <button onclick="changePage(1)" {% if page == 1 %}disabled{% endif %}>First</button>
+                <button onclick="changePage({{ page - 1 }})" {% if page == 1 %}disabled{% endif %}>Previous</button>
+                <span class="pagination-info">
+                    Page {{ page }} of {{ total_pages }}
+                    ({{ total_items }} items)
+                </span>
+                <button onclick="changePage({{ page + 1 }})" {% if page == total_pages %}disabled{% endif %}>Next</button>
+                <button onclick="changePage({{ total_pages }})" {% if page == total_pages %}disabled{% endif %}>Last</button>
+                <div class="per-page-select">
+                    <label for="perPage">Items per page:</label>
+                    <select id="perPage" onchange="changePerPage()">
+                        <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                        <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                        <option value="200" {% if per_page == 200 %}selected{% endif %}>200</option>
+                        <option value="all" {% if per_page == 'all' %}selected{% endif %}>All</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="gallery-grid">
+        {% for item in items %}
+            <div class="gallery-item" 
+                data-index="{{ loop.index0 }}"
+                data-path="{{ item.path }}"
+                data-name="{{ item.name }}"
+                data-filesize="{{ item.size }}"
+                data-created="{{ item.created }}"
+                data-modified="{{ item.modified }}"
+                data-is-video="{{ 'true' if item.is_video else 'false' }}"
+                data-is-image="{{ 'true' if item.is_image else 'false' }}"
+                data-is-folder="{{ 'true' if item.is_folder else 'false' }}">
+                {% if item.type == 'directory' %}
+                    <a href="{{ url_for('gallery', subpath=item.path, **request.args) }}">
+                        <div class="thumbnail">
+                            {% if item.thumbnail %}
+                                <img src="{{ url_for('thumbnail', filepath=item.thumbnail) }}" alt="{{ item.name }}">
+                            {% endif %}
+                        </div>
+                        <div class="item-info">
+                            <p class="item-name">{{ item.name }}</p>
+                        </div>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('view_file', filepath=item.path) }}" target="_blank">
+                        <div class="thumbnail">
+                            <img src="{{ url_for('thumbnail', filepath=item.path) }}" alt="{{ item.name }}">
+                            {% if item.path.lower().endswith(('.mp4', '.mov', '.avi')) %}
+                            <div class="video-overlay">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="item-info">
+                            <p class="item-name">{{ item.name }}</p>
+                            {% if not item.is_folder %}
+                            <div class="file-info">
+                                {{ (item.size / 1024)|round(1) }} KB • Modified: {{ item.modified|datetime }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Modal -->
+    <div id="mediaModal" class="modal">
+        <span class="modal-close">&times;</span>
+        <div class="modal-prev">‹</div>
+        <div class="modal-next">›</div>
+        <div class="modal-content"></div>
+        <div class="modal-nav">
+            <span id="currentIndex"></span> / <span id="totalItems"></span>
+        </div>
+        <div class="modal-controls">
+            <button id="slideshowToggle">Start Slideshow</button>
+            <span>Interval: </span>
+            <select id="slideshowInterval">
+                <option value="3">3s</option>
+                <option value="5" selected>5s</option>
+                <option value="10">10s</option>
+            </select>
+        </div>
+        <div class="keyboard-shortcuts">
+            N: Next | P: Previous | ESC: Close | S: Toggle Slideshow<br>
+            Video: ←→: Seek | Space: Play/Pause | M: Toggle Mute | 0-9: Jump to Position
+        </div>
+    </div>
+    <script>
+        const itemsPerPage = {{ per_page }};
+        const sortBy = '{{ sort_by }}';
+        const sortOrder = '{{ sort_order }}';
+        const currentPage = {{ page }};
+        const totalPages = {{ total_pages }};
+        const totalItems = {{ total_items }};
+        const mediaItems = {{ all_files|tojson|safe }};
+    </script>
+    <script src="{{ url_for('static', filename='js/gallery.js') }}"></script>
+</body>
+</html> 

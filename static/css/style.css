@@ -1,0 +1,407 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #f5f5f5;
+}
+
+.header {
+    margin-bottom: 20px;
+}
+
+.breadcrumb {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.breadcrumb a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0;
+    padding: 0;
+}
+
+/* Size variants */
+.gallery-grid[data-size="small"] {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+}
+
+.gallery-grid[data-size="medium"] {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.gallery-grid[data-size="big"] {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.gallery-item {
+    background: white;
+    border-radius: 0;
+    overflow: hidden;
+    transition: transform 0.2s, opacity 0.3s ease-in-out;
+    position: relative;
+    opacity: 0;
+}
+
+.gallery-item.loaded {
+    opacity: 1;
+}
+
+.gallery-item:hover {
+    filter: brightness(1.1);
+}
+
+.gallery-item a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    position: relative;
+}
+
+.thumbnail {
+    width: 100%;
+    background: #eee;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1;
+}
+
+/* Size-specific thumbnail heights */
+.gallery-grid[data-size="small"] .thumbnail {
+    height: 100px;
+}
+
+.gallery-grid[data-size="medium"] .thumbnail {
+    height: 200px;
+}
+
+.gallery-grid[data-size="big"] .thumbnail {
+    height: 300px;
+}
+
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.folder-overlay,
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 10px;
+    pointer-events: none;
+}
+
+.folder-overlay svg,
+.video-overlay svg {
+    width: 32px;
+    height: 32px;
+    fill: rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.video-overlay {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.folder-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.folder-icon svg {
+    width: 32px;
+    height: 32px;
+    fill: rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.item-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+/* Always show info for folders */
+.gallery-item[data-is-folder="true"] .item-info {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Show info on hover for files */
+.gallery-item[data-is-folder="false"]:hover .item-info {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.item-name {
+    margin: 0;
+    font-size: 0.9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-info {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 4px;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90vh;
+}
+
+.modal-content img,
+.modal-content video {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.modal-nav {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.modal-prev,
+.modal-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 40px;
+    cursor: pointer;
+    padding: 20px;
+    user-select: none;
+}
+
+.modal-prev {
+    left: 20px;
+}
+
+.modal-next {
+    right: 20px;
+}
+
+.keyboard-shortcuts {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: none;
+}
+
+.modal .keyboard-shortcuts {
+    display: block;
+}
+
+.modal-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.modal-controls button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.modal-controls button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-controls button.active {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.sort-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.sort-controls select,
+.sort-controls button,
+.sort-controls input {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+}
+
+.sort-controls input {
+    cursor: text;
+    min-width: 200px;
+}
+
+.sort-controls input:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0,102,204,0.1);
+}
+
+.sort-controls button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sort-controls button svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s;
+}
+
+.sort-controls button[data-order="desc"] svg {
+    transform: rotate(180deg);
+}
+
+.vertical-separator {
+    width: 1px;
+    height: 24px;
+    background-color: #ddd;
+    margin: 0 5px;
+}
+
+.pagination {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.pagination button {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.per-page-select {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.per-page-select select {
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.size-selector {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.size-selector select {
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+} 

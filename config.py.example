@@ -1,0 +1,78 @@
+"""
+Example configuration file for the gallery.
+Copy this file to config.py and adjust the settings as needed.
+"""
+
+import os
+
+# Server settings
+HOST = '0.0.0.0'  # Listen on all interfaces
+PORT = 5000       # Server port
+DEV_MODE = False  # Enable development mode
+
+# Gallery root directory (absolute path)
+GALLERY_ROOT = [
+    '/path/to/gallery',
+]
+# For docker use this
+# GALLERY_ROOT = [
+#     '/app/gallery',
+# ]
+
+# Cache directory for thumbnails (absolute path)
+CACHE_DIR = '.cache'
+# For docker use this
+# CACHE_DIR = '/app/cache'
+
+# Thumbnail settings
+THUMBNAIL_SIZE = (400, 400)  # Width, Height in pixels
+THUMBNAIL_QUALITY = 96  # JPEG quality (1-100)
+
+# File type settings
+ALLOWED_EXTENSIONS = {
+    'images': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'],
+    'videos': ['.mp4', '.mov', '.avi', '.webm']
+}
+
+# Minimum file size (in bytes) for files to be included
+# Set to 0 to include all files
+MIN_FILE_SIZE = 0
+
+# Ignored files and directories
+IGNORED_FILES = [
+    '.DS_Store',
+    'Thumbs.db',
+    'desktop.ini',
+    '*.tmp',
+    '*.temp'
+]
+
+IGNORED_DIRS = [
+    CACHE_DIR,
+    '.git',
+    '.svn',
+    '.hg',
+    'node_modules',
+    '__pycache__',
+    '.cache',
+    'temp',
+    'tmp'
+]
+
+# Gallery display settings
+ITEMS_PER_PAGE = 50
+DEFAULT_SORT = 'name'  # name, size, created, modified, type
+DEFAULT_ORDER = 'asc'  # asc, desc
+
+# Cache settings
+CACHE_DURATION = 3600  # Cache duration in seconds (1 hour)
+MAX_CACHE_SIZE = 1024 * 1024 * 1024  # Maximum cache size in bytes (1GB)
+
+# Video thumbnail settings
+VIDEO_THUMBNAIL_POSITION = 0.1  # Position in video to capture thumbnail (0.0 to 1.0)
+VIDEO_THUMBNAIL_FORMAT = 'jpg'
+VIDEO_THUMBNAIL_QUALITY = 85
+
+# Security settings
+ALLOW_DOWNLOAD = True  # Allow direct file downloads
+MAX_DOWNLOAD_SIZE = 1024 * 1024 * 1024  # Maximum file size for download (1GB) 
